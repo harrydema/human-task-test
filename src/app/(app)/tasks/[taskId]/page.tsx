@@ -2,28 +2,19 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { humanTaskRenderers } from "@io-orkes/human-task-material-renderers-react";
 import {
   HumanTaskEntry,
   HumanTaskTemplate,
 } from "@io-orkes/conductor-javascript";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { JsonForms } from "@jsonforms/react";
 import { JsonSchema, UISchemaElement } from "@jsonforms/core";
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import axios, { AxiosError } from "axios";
 import { paths } from "@/paths";
-import { materialRenderers } from "@jsonforms/material-renderers";
+import { humanTaskRenderers } from "@io-orkes/human-task-material-renderers-react";
 
-// export const humanTaskRenderers = [
-//   ...materialRenderers,
-//   { tester: DescriptionTextTester, renderer: DescriptionTextControl },
-//   { tester: ImageViewerTester, renderer: ImageViewerControl },
-//   { tester: VideoViewerTester, renderer: VideoViewerControl },
-//   { tester: BooleanTester, renderer: BooleanControl },
-//   { tester: MarkdownTextTester, renderer: MarkdownTextControl },
-//   { tester: FileUploadTester, renderer: FileUploadControl },
-// ];
+export const renderers = humanTaskRenderers;
 
 export default function Page() {
   const params = useParams<{ taskId: string }>();
@@ -71,8 +62,12 @@ export default function Page() {
     return formDataInitialState;
   }, [getData]);
 
-  const [formData, setFormData] =
-    useState<Record<string, any>>(formDataIntialState);
+  const [formData, setFormData] = useState<Record<string, any>>();
+
+  useEffect(() => {
+    setFormData(formDataIntialState);
+  }, [formDataIntialState]);
+
   const [formErrors, setFormErrors] = useState<any>([]);
   if (getIsLoading) {
     return (
@@ -113,10 +108,9 @@ export default function Page() {
           schema={getData.template.jsonSchema as JsonSchema}
           uischema={getData.template.templateUI as UISchemaElement}
           data={formData}
-          renderers={humanTaskRenderers}
+          renderers={renderers}
           onChange={({ data, errors }) => {
             setFormData(data);
-            console.log("data", data);
             if (errors) {
               setFormErrors(errors);
             } else {
