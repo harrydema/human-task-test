@@ -12,6 +12,7 @@ export async function POST() {
     const workflowExecutor = new WorkflowExecutor(orkesClient);
     const response = await workflowExecutor.startWorkflow({
       name: "pablo-tic-tac-toe",
+      version: 2,
     });
     return Response.json({
       executionId: response,

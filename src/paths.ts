@@ -4,5 +4,5 @@ export const paths = {
   task: "/tasks/[taskId]",
 
   newTicTacToe: "/tic-tac-toe",
-  ticTacToeExecutionId: "/tic-tac-toe/[executionId]",
+  ticTacToeExecutionId: "/tic-tac-toe/:executionId",
 };

@@ -2,9 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import _mergeWith from "lodash/mergeWith";
 import {
   HumanTaskEntry,
   HumanTaskTemplate,
+  Workflow,
 } from "@io-orkes/conductor-javascript";
 import { useEffect, useMemo, useState } from "react";
 import { JsonForms } from "@jsonforms/react";
@@ -26,6 +28,7 @@ export default function Page() {
     isRefetching: getIsRefetching,
     refetch,
   } = useQuery<{
+    workflow: Workflow;
     task: HumanTaskEntry;
     template: HumanTaskTemplate;
   }>({
@@ -73,7 +76,22 @@ export default function Page() {
   });
 
   const formDataIntialState = useMemo(() => {
-    const inputData = getData?.task?.input || {};
+    const inputData = _mergeWith(
+      {},
+      {
+        a1: "",
+        a2: "",
+        a3: "",
+        b1: "",
+        b2: "",
+        b3: "",
+        c1: "",
+        c2: "",
+        c3: "",
+      },
+      getData?.task?.input,
+      (a, b) => (b === null ? a : b)
+    );
     const {
       __humanTaskDefinition,
       __humanTaskProcessContext,
@@ -82,6 +100,8 @@ export default function Page() {
     } = inputData;
     return formDataInitialState;
   }, [getData]);
+
+  console.log("aaaa", formDataIntialState);
 
   const [formData, setFormData] = useState<Record<string, any>>();
 
@@ -104,20 +124,103 @@ export default function Page() {
       </Box>
     );
   }
-  if (!getData?.template) {
-    return (
-      <Box
-        sx={{
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography variant="h5">No template found</Typography>
-      </Box>
-    );
+
+  if (getData?.workflow.status === "COMPLETED") {
+    if (!getData?.template) {
+      return (
+        <Box
+          sx={{
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Box
+            sx={{
+              textAlign: "center",
+            }}
+          >
+            <Typography variant="h5">Game finished</Typography>
+            {getData?.workflow?.output?.winner?.result === "draw" && (
+              <Typography variant="h5">Draw</Typography>
+            )}
+            {getData?.workflow?.output?.winner?.result === "ai" && (
+              <Typography variant="h5">AI Won!</Typography>
+            )}
+            {getData?.workflow?.output?.winner?.result === "human" && (
+              <Typography variant="h5">You Won!</Typography>
+            )}
+            <Button
+              sx={{
+                mt: 2,
+              }}
+              fullWidth
+              variant="contained"
+              color="success"
+              onClick={() => {
+                router.push(paths.newTicTacToe);
+              }}
+            >
+              Play again
+            </Button>
+          </Box>
+        </Box>
+      );
+    }
   }
+
+  if (getData?.workflow.status === "FAILED") {
+    if (!getData?.template) {
+      return (
+        <Box
+          sx={{
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Typography variant="h5">Game failed</Typography>
+        </Box>
+      );
+    }
+  }
+
+  if (getData?.workflow.status === "RUNNING" && !getData?.template) {
+    if (!getData?.template) {
+      return (
+        <Box
+          sx={{
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Typography variant="h5">AI playing...</Typography>
+        </Box>
+      );
+    }
+  }
+
+  if (!getData?.template) {
+    if (!getData?.template) {
+      return (
+        <Box
+          sx={{
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Typography variant="h5">No template found</Typography>
+        </Box>
+      );
+    }
+  }
+
   return (
     <>
       <Box
@@ -146,7 +249,6 @@ export default function Page() {
           }}
           fullWidth
           variant="contained"
-          disabled={formErrors.length > 0}
           onClick={() => {
             submitForm();
           }}
@@ -160,7 +262,6 @@ export default function Page() {
           fullWidth
           variant="contained"
           color="error"
-          disabled={formErrors.length > 0}
           onClick={() => {
             endGame();
           }}
